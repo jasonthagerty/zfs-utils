@@ -7,7 +7,7 @@
 #
 pkgname="zfs-utils"
 
-pkgver=2.3.2
+pkgver=2.3.3
 pkgrel=1
 pkgdesc="Kernel module support files for the Zettabyte File System."
 makedepends=("python" "python-setuptools" "python-cffi")
@@ -18,7 +18,7 @@ source=("https://github.com/openzfs/zfs/releases/download/zfs-${pkgver}/zfs-${pk
         "zfs-utils.initcpio.install"
         "zfs-utils.initcpio.hook"
         "zfs-utils.initcpio.zfsencryptssh.install")
-sha256sums=("80da628a9543ec3355bf410617450e167706948ceb287541455a1b8d87b8758a"
+sha256sums=("844122118f0ea81205a01753bbcb1315330f8967c1f866dcd10155273131f071"
             "d19476c6a599ebe3415680b908412c8f19315246637b3a61e811e2e0961aea78"
             "569089e5c539097457a044ee8e7ab9b979dec48f69760f993a6648ee0f21c222"
             "93e6ac4e16f6b38b2fa397a63327bcf7001111e3a58eb5fb97c888098c932a51")
