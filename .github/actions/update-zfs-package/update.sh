@@ -158,8 +158,26 @@ update_pkgbuild_utils() {
         sed -i "s/^pkgver=.*/pkgver=${new_zfs_version}/" "$PKGBUILD_PATH"
     fi
 
-    # Update checksum
-    sed -i "s/sha256sums=(\"[^\"]*\")/sha256sums=(\"${new_sha256}\")/" "$PKGBUILD_PATH"
+    # Update checksum - handle both single and multi-line arrays
+    # For single-line arrays: sha256sums=("checksum")
+    # For multi-line arrays: sha256sums=('checksum1'
+    #                                     'checksum2'...)
+    # We need to replace only the first checksum (ZFS tarball)
+
+    if grep -q "sha256sums=(" "$PKGBUILD_PATH"; then
+        # Check if it's a single-line array with double quotes
+        if grep -q 'sha256sums=(".*")' "$PKGBUILD_PATH"; then
+            # Single checksum on one line with double quotes
+            sed -i "s/sha256sums=(\"[^\"]*\")/sha256sums=(\"${new_sha256}\")/" "$PKGBUILD_PATH"
+        elif grep -q "sha256sums=('[^']*'" "$PKGBUILD_PATH"; then
+            # Multi-line array with single quotes - first checksum on same line as sha256sums=(
+            # Match sha256sums=('old_checksum' and replace just the checksum part
+            sed -i "s/sha256sums=('[^']*'/sha256sums=('${new_sha256}'/" "$PKGBUILD_PATH"
+        else
+            log_warn "Unable to detect sha256sums format - may need manual update"
+        fi
+    fi
+
     sed -i "s/^pkgrel=.*/pkgrel=1/" "$PKGBUILD_PATH"
 
     log_info "PKGBUILD updated successfully"
