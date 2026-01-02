@@ -234,9 +234,38 @@ update_zen_package() {
         needs_update=true
     fi
 
-    if [ "$needs_update" = false ]; then
+    # Check if force update is requested
+    local force_update="${FORCE_UPDATE:-false}"
+
+    if [ "$needs_update" = false ] && [ "$force_update" != "true" ]; then
         log_info "Package is up to date!"
         echo "up_to_date=true" >> "${GITHUB_OUTPUT:-/dev/null}" 2>/dev/null || true
+        return 0
+    fi
+
+    if [ "$needs_update" = false ] && [ "$force_update" = "true" ]; then
+        log_info "Force update requested - incrementing pkgrel..."
+        update_reason="Forced rebuild (no version change)"
+        needs_update=true
+
+        # Get current pkgrel and increment it
+        local current_pkgrel
+        current_pkgrel=$(grep -oP '^pkgrel=\K[0-9]+' "$PKGBUILD_PATH")
+        local new_pkgrel=$((current_pkgrel + 1))
+
+        sed -i "s/^pkgrel=.*/pkgrel=${new_pkgrel}/" "$PKGBUILD_PATH"
+        generate_srcinfo
+
+        # Output for GitHub Actions
+        if [ -n "${GITHUB_OUTPUT:-}" ]; then
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+            echo "zfs_version=$current_zfs" >> "$GITHUB_OUTPUT"
+            echo "kernel_version=$current_kernel" >> "$GITHUB_OUTPUT"
+            echo "update_reason=$update_reason (pkgrel: $current_pkgrel → $new_pkgrel)" >> "$GITHUB_OUTPUT"
+        fi
+
+        log_info "Update completed successfully!"
+        log_info "Update summary: $update_reason (pkgrel: $current_pkgrel → $new_pkgrel)"
         return 0
     fi
 
@@ -282,9 +311,36 @@ update_utils_package() {
 
     log_info "Latest ZFS version: $latest_zfs"
 
-    if [ "$current_zfs" = "$latest_zfs" ]; then
+    # Check if force update is requested
+    local force_update="${FORCE_UPDATE:-false}"
+
+    if [ "$current_zfs" = "$latest_zfs" ] && [ "$force_update" != "true" ]; then
         log_info "Package is up to date!"
         echo "up_to_date=true" >> "${GITHUB_OUTPUT:-/dev/null}" 2>/dev/null || true
+        return 0
+    fi
+
+    if [ "$current_zfs" = "$latest_zfs" ] && [ "$force_update" = "true" ]; then
+        log_info "Force update requested - incrementing pkgrel..."
+        local update_reason="Forced rebuild (no version change)"
+
+        # Get current pkgrel and increment it
+        local current_pkgrel
+        current_pkgrel=$(grep -oP '^pkgrel=\K[0-9]+' "$PKGBUILD_PATH")
+        local new_pkgrel=$((current_pkgrel + 1))
+
+        sed -i "s/^pkgrel=.*/pkgrel=${new_pkgrel}/" "$PKGBUILD_PATH"
+        generate_srcinfo
+
+        # Output for GitHub Actions
+        if [ -n "${GITHUB_OUTPUT:-}" ]; then
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+            echo "zfs_version=$current_zfs" >> "$GITHUB_OUTPUT"
+            echo "update_reason=$update_reason (pkgrel: $current_pkgrel → $new_pkgrel)" >> "$GITHUB_OUTPUT"
+        fi
+
+        log_info "Update completed successfully!"
+        log_info "Update summary: $update_reason (pkgrel: $current_pkgrel → $new_pkgrel)"
         return 0
     fi
 

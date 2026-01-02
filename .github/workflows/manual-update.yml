@@ -12,6 +12,11 @@ on:
           - zfs-linux-zen
           - zfs-utils
         default: auto
+      force:
+        description: 'Force update even if versions are current (increments pkgrel)'
+        required: false
+        type: boolean
+        default: false
       dry_run:
         description: 'Dry run (do not commit/push)'
         required: false
@@ -41,6 +46,7 @@ jobs:
         uses: ./.github/actions/update-zfs-package
         with:
           package-type: ${{ inputs.package_type }}
+          force: ${{ inputs.force }}
 
       - name: Check for changes
         id: check_changes
@@ -86,6 +92,11 @@ jobs:
         run: |
           echo "## Manual Update Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ inputs.force }}" == "true" ]; then
+            echo "⚡ **Force Update Mode Enabled**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
 
           if [ "${{ inputs.dry_run }}" == "true" ]; then
             echo "🔍 **Dry Run Mode** - No changes committed" >> $GITHUB_STEP_SUMMARY

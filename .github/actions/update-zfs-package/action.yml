@@ -15,6 +15,10 @@ inputs:
     description: 'Path to PKGBUILD file'
     required: false
     default: './PKGBUILD'
+  force:
+    description: 'Force update even if versions are current (increments pkgrel)'
+    required: false
+    default: 'false'
 
 outputs:
   updated:
@@ -52,5 +56,6 @@ runs:
       env:
         PACKAGE_TYPE: ${{ inputs.package-type }}
         PKGBUILD_PATH: ${{ inputs.pkgbuild-path }}
+        FORCE_UPDATE: ${{ inputs.force }}
       run: |
         "${{ github.action_path }}/update.sh"
