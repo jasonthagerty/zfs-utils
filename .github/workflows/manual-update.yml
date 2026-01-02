@@ -1,0 +1,112 @@
+name: Manual Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_type:
+        description: 'Package type (auto, zfs-linux-zen, zfs-utils)'
+        required: false
+        type: choice
+        options:
+          - auto
+          - zfs-linux-zen
+          - zfs-utils
+        default: auto
+      dry_run:
+        description: 'Dry run (do not commit/push)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  manual-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "ZFS Manual Update"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update package
+        id: update
+        uses: ./.github/actions/update-zfs-package
+        with:
+          package-type: ${{ inputs.package_type }}
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet PKGBUILD; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Show diff
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          echo "## Changes to PKGBUILD" >> $GITHUB_STEP_SUMMARY
+          echo '```diff' >> $GITHUB_STEP_SUMMARY
+          git diff PKGBUILD >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true' && inputs.dry_run == false
+        run: |
+          # Get version info from outputs
+          ZFS_VERSION="${{ steps.update.outputs.zfs_version }}"
+          KERNEL_VERSION="${{ steps.update.outputs.kernel_version }}"
+
+          # Add changed files
+          git add PKGBUILD .SRCINFO 2>/dev/null || git add PKGBUILD
+
+          # Create commit message based on package type
+          if [ -n "$KERNEL_VERSION" ]; then
+            # zfs-linux-zen package
+            git commit -m "Manual update for kernel ${KERNEL_VERSION} + zfs ${ZFS_VERSION}"
+          else
+            # zfs-utils package
+            git commit -m "Manual update for zfs ${ZFS_VERSION}"
+          fi
+
+          # Push changes
+          git push
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## Manual Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ inputs.dry_run }}" == "true" ]; then
+            echo "🔍 **Dry Run Mode** - No changes committed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
+            if [ "${{ inputs.dry_run }}" == "false" ]; then
+              echo "✅ **Package updated successfully!**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "ℹ️ **Changes detected but not committed (dry run)**" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Update Details:**" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.update.outputs.update_reason }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **ZFS Version:** ${{ steps.update.outputs.zfs_version }}" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ steps.update.outputs.kernel_version }}" ]; then
+              echo "- **Kernel Version:** ${{ steps.update.outputs.kernel_version }}" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ steps.update.outputs.up_to_date }}" == "true" ]; then
+            echo "ℹ️ **No updates needed** - Package is already up to date" >> $GITHUB_STEP_SUMMARY
+          fi

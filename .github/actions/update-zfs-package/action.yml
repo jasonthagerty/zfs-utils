@@ -1,0 +1,56 @@
+name: 'Update ZFS Package'
+description: 'Generic action to update ZFS packages (zfs-linux-zen or zfs-utils)'
+author: 'ZFS Automation'
+
+branding:
+  icon: 'package'
+  color: 'blue'
+
+inputs:
+  package-type:
+    description: 'Package type to update (zfs-linux-zen, zfs-utils, or auto)'
+    required: false
+    default: 'auto'
+  pkgbuild-path:
+    description: 'Path to PKGBUILD file'
+    required: false
+    default: './PKGBUILD'
+
+outputs:
+  updated:
+    description: 'Whether the package was updated (true/false)'
+    value: ${{ steps.update.outputs.updated }}
+  up_to_date:
+    description: 'Whether the package is already up to date (true/false)'
+    value: ${{ steps.update.outputs.up_to_date }}
+  zfs_version:
+    description: 'ZFS version after update'
+    value: ${{ steps.update.outputs.zfs_version }}
+  kernel_version:
+    description: 'Kernel version after update (zfs-linux-zen only)'
+    value: ${{ steps.update.outputs.kernel_version }}
+  update_reason:
+    description: 'Human-readable update reason'
+    value: ${{ steps.update.outputs.update_reason }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq jq curl
+
+    - name: Make update script executable
+      shell: bash
+      run: chmod +x "${{ github.action_path }}/update.sh"
+
+    - name: Run update script
+      id: update
+      shell: bash
+      env:
+        PACKAGE_TYPE: ${{ inputs.package-type }}
+        PKGBUILD_PATH: ${{ inputs.pkgbuild-path }}
+      run: |
+        "${{ github.action_path }}/update.sh"

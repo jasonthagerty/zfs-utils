@@ -1,0 +1,91 @@
+name: Auto Update Package
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "ZFS Auto Update Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update package
+        id: update
+        uses: ./.github/actions/update-zfs-package
+        with:
+          package-type: auto  # Auto-detect from PKGBUILD
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet PKGBUILD; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          # Get version info from outputs
+          ZFS_VERSION="${{ steps.update.outputs.zfs_version }}"
+          KERNEL_VERSION="${{ steps.update.outputs.kernel_version }}"
+
+          # Add changed files
+          git add PKGBUILD .SRCINFO 2>/dev/null || git add PKGBUILD
+
+          # Create commit message based on package type
+          if [ -n "$KERNEL_VERSION" ]; then
+            # zfs-linux-zen package
+            git commit -m "Automated update for kernel ${KERNEL_VERSION} + zfs ${ZFS_VERSION}"
+          else
+            # zfs-utils package
+            git commit -m "Automated update for zfs ${ZFS_VERSION}"
+          fi
+
+          # Push changes
+          git push
+
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## Update Check Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
+            echo "✅ **Package updated successfully!**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Update Details:**" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.update.outputs.update_reason }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **ZFS Version:** ${{ steps.update.outputs.zfs_version }}" >> $GITHUB_STEP_SUMMARY
+            if [ -n "${{ steps.update.outputs.kernel_version }}" ]; then
+              echo "- **Kernel Version:** ${{ steps.update.outputs.kernel_version }}" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ steps.update.outputs.up_to_date }}" == "true" ]; then
+            echo "ℹ️ **No updates needed** - Package is already up to date" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "## ❌ Update Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The automated update process encountered an error." >> $GITHUB_STEP_SUMMARY
+          echo "Please check the workflow logs for details." >> $GITHUB_STEP_SUMMARY
