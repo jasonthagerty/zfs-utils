@@ -45,20 +45,28 @@ jobs:
 
               # Build package
               su builder -c "cd /workspace && makepkg -s --noconfirm"
+
+              # Fix permissions so host can access files
+              chmod -R 755 /workspace
             '
 
-      - name: Create repository directory
+      - name: Create repository directory and database
         run: |
+          # Create repo directory and move packages
           mkdir -p repo
+          sudo chown -R $(id -u):$(id -g) *.pkg.tar.zst 2>/dev/null || true
           mv *.pkg.tar.zst repo/
-          cd repo
 
-          # Create repository database (using Docker since we need repo-add)
+          # Create repository database in container
           docker run --rm \
-            -v "$PWD:/repo" \
+            -v "$PWD/repo:/repo" \
             -w /repo \
             archlinux:latest \
-            bash -c 'pacman -Sy --noconfirm pacman && repo-add archzfs.db.tar.gz *.pkg.tar.zst'
+            bash -c '
+              pacman -Sy --noconfirm pacman
+              repo-add archzfs.db.tar.gz *.pkg.tar.zst
+              chmod -R 755 /repo
+            '
 
       - name: Generate repository index
         run: |
