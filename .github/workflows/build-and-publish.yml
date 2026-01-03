@@ -60,8 +60,7 @@ jobs:
 
       - name: Generate repository index
         run: |
-          chmod +x .github/workflows/generate-index.sh
-          .github/workflows/generate-index.sh repo/index.html
+          bash .github/workflows/generate-index.sh repo/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
