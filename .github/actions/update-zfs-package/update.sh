@@ -159,27 +159,25 @@ update_pkgbuild_utils() {
     fi
 
     # Update checksum - handle both single and multi-line arrays
-    # For single-line arrays: sha256sums=("checksum")
-    # For multi-line arrays with single quotes: sha256sums=('checksum1'
-    #                                                        'checksum2'...)
-    # For multi-line arrays with double quotes: sha256sums=("checksum1"
-    #                                                        "checksum2"...)
-    # We need to replace only the first checksum (ZFS tarball)
+    # This replaces the first checksum in the sha256sums array (ZFS tarball)
+    # Works for both single-line and multi-line formats with single or double quotes
 
     if grep -q "sha256sums=(" "$PKGBUILD_PATH"; then
-        # Check if it's a single-line array with double quotes (full array on one line)
-        if grep -q 'sha256sums=(".*")' "$PKGBUILD_PATH"; then
-            # Single checksum on one line with double quotes
-            sed -i 's/sha256sums=("\([^"]*\)")/sha256sums=("'"${new_sha256}"'")/' "$PKGBUILD_PATH"
-        elif grep -q "sha256sums=('[^']*'" "$PKGBUILD_PATH"; then
-            # Multi-line array with single quotes - first checksum on same line as sha256sums=(
-            sed -i "s/sha256sums=('\([^']*\)'/sha256sums=('${new_sha256}'/" "$PKGBUILD_PATH"
-        elif grep -q 'sha256sums=("[^"]*"' "$PKGBUILD_PATH"; then
-            # Multi-line array with double quotes - first checksum on same line as sha256sums=(
-            sed -i 's/sha256sums=("\([^"]*\)"/sha256sums=("'"${new_sha256}"'"/' "$PKGBUILD_PATH"
+        # First try double quotes (most common)
+        if grep -q 'sha256sums=("' "$PKGBUILD_PATH"; then
+            # Replace first checksum in double-quoted array
+            sed -i 's/^\(sha256sums=(\)"[^"]*"/\1"'"${new_sha256}"'"/' "$PKGBUILD_PATH"
+            log_info "Updated sha256sum (double quotes format)"
+        # Try single quotes
+        elif grep -q "sha256sums=('" "$PKGBUILD_PATH"; then
+            # Replace first checksum in single-quoted array
+            sed -i "s/^\(sha256sums=(\)'[^']*'/\1'${new_sha256}'/" "$PKGBUILD_PATH"
+            log_info "Updated sha256sum (single quotes format)"
         else
             log_warn "Unable to detect sha256sums format - may need manual update"
         fi
+    else
+        log_warn "No sha256sums array found in PKGBUILD"
     fi
 
     sed -i "s/^pkgrel=.*/pkgrel=1/" "$PKGBUILD_PATH"
