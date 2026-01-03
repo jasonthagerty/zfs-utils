@@ -8,7 +8,7 @@
 pkgname="zfs-utils"
 
 pkgver=2.4.0
-pkgrel=4
+pkgrel=5
 pkgdesc="Kernel module support files for the Zettabyte File System."
 makedepends=("python" "python-setuptools" "python-cffi")
 optdepends=("python: pyzfs and extra utilities", "python-cffi: pyzfs")
