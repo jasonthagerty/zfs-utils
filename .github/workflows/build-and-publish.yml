@@ -26,7 +26,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build package in Arch Linux container
+      - name: Build package and create repository
         run: |
           # Run build in Arch Linux container
           docker run --rm \
@@ -46,26 +46,16 @@ jobs:
               # Build package
               su builder -c "cd /workspace && makepkg -s --noconfirm"
 
-              # Fix permissions so host can access files
-              chmod -R 755 /workspace
-            '
+              # Create repo directory and move packages
+              mkdir -p /workspace/repo
+              mv /workspace/*.pkg.tar.zst /workspace/repo/
 
-      - name: Create repository directory and database
-        run: |
-          # Create repo directory and move packages
-          mkdir -p repo
-          sudo chown -R $(id -u):$(id -g) *.pkg.tar.zst 2>/dev/null || true
-          mv *.pkg.tar.zst repo/
-
-          # Create repository database in container
-          docker run --rm \
-            -v "$PWD/repo:/repo" \
-            -w /repo \
-            archlinux:latest \
-            bash -c '
-              pacman -Sy --noconfirm pacman
+              # Create repository database
+              cd /workspace/repo
               repo-add archzfs.db.tar.gz *.pkg.tar.zst
-              chmod -R 755 /repo
+
+              # Fix permissions for all repo files
+              chmod -R 777 /workspace/repo
             '
 
       - name: Generate repository index
