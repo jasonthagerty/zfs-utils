@@ -170,13 +170,13 @@ update_pkgbuild_utils() {
         # Check if it's a single-line array with double quotes (full array on one line)
         if grep -q 'sha256sums=(".*")' "$PKGBUILD_PATH"; then
             # Single checksum on one line with double quotes
-            sed -i "s/sha256sums=(\"[^\"]*\")/sha256sums=(\"${new_sha256}\")/" "$PKGBUILD_PATH"
+            sed -i 's/sha256sums=("\([^"]*\)")/sha256sums=("'"${new_sha256}"'")/' "$PKGBUILD_PATH"
         elif grep -q "sha256sums=('[^']*'" "$PKGBUILD_PATH"; then
             # Multi-line array with single quotes - first checksum on same line as sha256sums=(
-            sed -i "s/sha256sums=('[^']*'/sha256sums=('${new_sha256}'/" "$PKGBUILD_PATH"
+            sed -i "s/sha256sums=('\([^']*\)'/sha256sums=('${new_sha256}'/" "$PKGBUILD_PATH"
         elif grep -q 'sha256sums=("[^"]*"' "$PKGBUILD_PATH"; then
             # Multi-line array with double quotes - first checksum on same line as sha256sums=(
-            sed -i "s/sha256sums=(\"[^\"]*\"/sha256sums=(\"${new_sha256}\"/" "$PKGBUILD_PATH"
+            sed -i 's/sha256sums=("\([^"]*\)"/sha256sums=("'"${new_sha256}"'"/' "$PKGBUILD_PATH"
         else
             log_warn "Unable to detect sha256sums format - may need manual update"
         fi
