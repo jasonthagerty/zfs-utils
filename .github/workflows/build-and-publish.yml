@@ -71,7 +71,8 @@ jobs:
           # Generate package file list
           cd _site/repo
           PACKAGE_LIST=""
-          for file in *.pkg.tar.zst *.db.tar.gz *.db *.files.tar.gz *.files 2>/dev/null; do
+          shopt -s nullglob
+          for file in *.pkg.tar.zst *.db.tar.gz *.db *.files.tar.gz *.files; do
             if [ -f "$file" ]; then
               PACKAGE_LIST="${PACKAGE_LIST}<li><a href=\"${file}\">${file}</a></li>\n"
             fi
