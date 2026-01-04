@@ -62,10 +62,15 @@ jobs:
         run: |
           bash .github/workflows/generate-index.sh repo/index.html
 
+      - name: Prepare Pages directory
+        run: |
+          mkdir -p _site
+          cp -r repo _site/
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
   deploy:
     needs: build
