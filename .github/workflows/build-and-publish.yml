@@ -65,7 +65,24 @@ jobs:
 
       - name: Generate repository index
         run: |
+          # Generate base HTML
           bash .github/workflows/generate-index.sh _site/repo/index.html
+
+          # Generate package file list
+          cd _site/repo
+          PACKAGE_LIST=""
+          for file in *.pkg.tar.zst *.db.tar.gz *.db *.files.tar.gz *.files 2>/dev/null; do
+            if [ -f "$file" ]; then
+              PACKAGE_LIST="${PACKAGE_LIST}<li><a href=\"${file}\">${file}</a></li>\n"
+            fi
+          done
+
+          # Insert package list into HTML
+          if [ -n "$PACKAGE_LIST" ]; then
+            sed -i "s|<!-- Package list will be inserted here during build -->|${PACKAGE_LIST}|" index.html
+          else
+            sed -i "s|<!-- Package list will be inserted here during build -->|<li>No packages found</li>|" index.html
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

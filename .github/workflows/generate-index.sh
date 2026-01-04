@@ -105,33 +105,8 @@ sudo pacman -S zfs-linux-zen</code></pre>
 
         <h2>Package Files</h2>
         <ul id="package-list">
-            <li>Loading...</li>
+            <!-- Package list will be inserted here during build -->
         </ul>
-
-        <script>
-        fetch('.')
-            .then(response => response.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'))
-                    .filter(a => a.href.match(/\.(pkg\.tar\.zst|db|sig)$/))
-                    .map(a => a.href.split('/').pop());
-
-                const list = document.getElementById('package-list');
-                if (links.length > 0) {
-                    list.innerHTML = links.map(file =>
-                        `<li><a href="${file}">${file}</a></li>`
-                    ).join('');
-                } else {
-                    list.innerHTML = '<li>No packages found yet. Check back after the first build completes.</li>';
-                }
-            })
-            .catch(() => {
-                document.getElementById('package-list').innerHTML =
-                    '<li>Unable to load package list</li>';
-            });
-        </script>
     </div>
 </body>
 </html>
