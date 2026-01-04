@@ -67,7 +67,7 @@ cat > "$1" <<'EOF'
 
         <h2>Installation</h2>
         <p>Add this repository to your <code>/etc/pacman.conf</code>:</p>
-        <pre><code>[archzfs]
+        <pre><code>[zfs-custom]
 Server = https://jasonthagerty.github.io/zfs-utils/repo
 SigLevel = Optional TrustAll</code></pre>
 

@@ -52,7 +52,7 @@ jobs:
 
               # Create repository database
               cd /workspace/repo
-              repo-add archzfs.db.tar.gz *.pkg.tar.zst
+              repo-add zfs-custom.db.tar.gz *.pkg.tar.zst
 
               # Prepare Pages directory structure
               cd /workspace
