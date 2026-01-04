@@ -54,18 +54,18 @@ jobs:
               cd /workspace/repo
               repo-add archzfs.db.tar.gz *.pkg.tar.zst
 
-              # Fix permissions for all repo files
-              chmod -R 777 /workspace/repo
+              # Prepare Pages directory structure
+              cd /workspace
+              mkdir -p _site
+              cp -r repo _site/
+
+              # Fix permissions for all files
+              chmod -R 777 /workspace/_site
             '
 
       - name: Generate repository index
         run: |
-          bash .github/workflows/generate-index.sh repo/index.html
-
-      - name: Prepare Pages directory
-        run: |
-          mkdir -p _site
-          cp -r repo _site/
+          bash .github/workflows/generate-index.sh _site/repo/index.html
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
