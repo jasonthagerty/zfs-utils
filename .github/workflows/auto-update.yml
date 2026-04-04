@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   check-and-update:
@@ -61,6 +62,12 @@ jobs:
 
           # Push changes
           git push
+
+      - name: Trigger build workflow
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: gh workflow run build-and-publish.yml --repo ${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create summary
         if: always()
