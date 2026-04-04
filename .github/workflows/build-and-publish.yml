@@ -74,8 +74,7 @@ jobs:
           shopt -s nullglob
           for file in *.pkg.tar.zst *.db.tar.gz *.db *.files.tar.gz *.files; do
             if [ -f "$file" ]; then
-              PACKAGE_LIST="${PACKAGE_LIST}<li><a href=\"${file}\">${file}</a></li>
-"
+              PACKAGE_LIST="${PACKAGE_LIST}<li><a href=\"${file}\">${file}</a></li>\n"
             fi
           done
 
