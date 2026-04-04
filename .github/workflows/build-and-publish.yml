@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build package and create repository
         run: |
@@ -74,7 +74,8 @@ jobs:
           shopt -s nullglob
           for file in *.pkg.tar.zst *.db.tar.gz *.db *.files.tar.gz *.files; do
             if [ -f "$file" ]; then
-              PACKAGE_LIST="${PACKAGE_LIST}<li><a href=\"${file}\">${file}</a></li>\n"
+              PACKAGE_LIST="${PACKAGE_LIST}<li><a href=\"${file}\">${file}</a></li>
+"
             fi
           done
 
@@ -86,7 +87,7 @@ jobs:
           fi
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: _site
 
@@ -100,4 +101,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
