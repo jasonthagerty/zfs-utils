@@ -28,7 +28,7 @@ provides=("zfs-utils" "spl-utils")
 install=zfs-utils.install
 conflicts=("zfs-utils" "spl-utils")
 replaces=("zfs-utils-linux" "zfs-utils-linux-lts" "zfs-utils-common")
-backup=('etc/zfs/zed.d/zed.rc' 'etc/default/zfs' 'etc/modules-load.d/zfs.conf' 'etc/sudoers.d/zfs')
+backup=('etc/zfs/zed.d/zed.rc' 'etc/default/zfs' 'etc/modules-load.d/zfs.conf')
 
 build() {
     cd "${srcdir}/zfs-${pkgver}"
@@ -51,9 +51,6 @@ package() {
     # Autoload the zfs module at boot
     mkdir -p "${pkgdir}/etc/modules-load.d"
     printf "%s\n" "zfs" > "${pkgdir}/etc/modules-load.d/zfs.conf"
-    # fix permissions
-    chmod 750 ${pkgdir}/etc/sudoers.d
-    chmod 440 ${pkgdir}/etc/sudoers.d/zfs
     # Install the support files
     install -D -m644 "${srcdir}"/zfs-utils.initcpio.hook "${pkgdir}"/usr/lib/initcpio/hooks/zfs
     install -D -m644 "${srcdir}"/zfs-utils.initcpio.install "${pkgdir}"/usr/lib/initcpio/install/zfs

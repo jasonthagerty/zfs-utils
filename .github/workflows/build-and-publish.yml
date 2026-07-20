@@ -34,6 +34,9 @@ jobs:
             -w /workspace \
             archlinux:latest \
             bash -c '
+              # Fail loudly if any build step fails, instead of publishing an empty repo
+              set -euo pipefail
+
               # Update system and install build dependencies
               pacman -Syu --noconfirm
               pacman -S --noconfirm base-devel git python python-setuptools python-cffi
